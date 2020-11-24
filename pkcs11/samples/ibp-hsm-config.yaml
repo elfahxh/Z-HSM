@@ -1,0 +1,21 @@
+apiVersion: v1
+data:
+  ibp-hsm-config.yaml: |
+    envs:
+    - name: EP11CLIENT_CFG
+      value: /hsm/lib/grep11client.yaml
+    mountpaths:
+    - name: hsmconfig
+      secret: hsmcrypto
+      mountpath: /hsm/lib/grep11client.yaml
+      subpath: grep11client.yaml
+    library:
+      filepath: /etc/ep11client/pkcs11-grep11-s390x.so
+      image: docker.io/hexiaohu/pkcs11-ubi:s390x-1.0.0
+      auth:
+        imagePullSecret: ""
+    type: hsm
+    version: v1
+kind: ConfigMap
+metadata:
+  name: ibp-hsm-config

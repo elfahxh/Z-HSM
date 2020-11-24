@@ -1,0 +1,47 @@
+amcredentialtemplate: &defaultiamcredential
+          enabled: true
+          endpoint: "https://iam.test.cloud.ibm.com"
+          #keep apikey empty since it is overriden by user configure
+          apikey:
+          #All users have same instance ID
+          instance: ae8e7fb2-b018-471c-959a-800dc94dd39e
+tokens:
+  0:
+    grep11connection:
+      address: ep11.us-south.hs-crypto.test.cloud.ibm.com
+      port: 9846
+      tls:
+        enabled: true
+        mutual: false
+        cacert:
+        certfile:
+        keyfile:
+    storage:
+      filestore:
+        enabled: false
+        storagepath:
+      remotestore:
+        enabled: true
+      # localpostgres:
+      #   enabled: false
+      #   connectionstring:
+    users:
+      0: # SO User
+        name: "SO user"
+        iamauth:
+          <<: *defaultiamcredential
+      1: # User
+        name: "Normal user"
+        tokenspaceID: "11000000-0000-0000-0200-000000000aaa"
+        iamauth:
+          <<: *defaultiamcredential
+      2: # Anonymous user
+        name: "Anonymous"
+        tokenspaceID: "21000000-0000-0000-0200-000000000bbb"
+        iamauth:
+          <<: *defaultiamcredential
+          # this API key must exist to overide apikey in defaultcredentials.iamauth.apikey
+          apikey: z7mcDFI_3HFtkwn-eGPl6OOJO5wBBSBphBAxoJTRWpiW
+logging:
+  loglevel: trace
+  logpath: /tmp/pkcs11client.txt

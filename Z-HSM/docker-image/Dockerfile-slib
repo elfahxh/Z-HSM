@@ -1,13 +1,11 @@
 FROM s390x/ubuntu:20.04 as builder
-
 ARG VERSION=2032875
-ARG DEBIAN_FRONTEND=noninteractive
-ENV TZ=America/New_York
-
+ARG http_proxy=http://cluprdproxy.slib.com:3128
+ARG https_proxy=http://cluprdproxy.slib.com:3128
 ### build pkcs11-proxy ###
+ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update \
     && apt-get -y install \
-    tzdata \
     make \
     cmake \
     build-essential \
@@ -20,29 +18,22 @@ RUN apt-get update \
     g++ \
     git \
     && rm -rf /var/lib/apt/lists/*
-
 RUN git clone https://github.com/SUNET/pkcs11-proxy && \
     cd pkcs11-proxy && \
     git checkout ${VERSION} && \
     cmake . && \
     make && \
     make install
-
-
 FROM s390x/ubuntu:20.04
-
-ARG DEBIAN_FRONTEND=noninteractive
-ENV TZ=America/New_York
-
 COPY --from=builder /usr/local/bin/pkcs11-daemon /usr/local/bin/pkcs11-daemon
 COPY --from=builder /usr/local/lib/libpkcs11-proxy.so.0.1 /usr/local/lib/libpkcs11-proxy.so.0.1
 COPY --from=builder /usr/local/lib/libpkcs11-proxy.so.0 /usr/local/lib/libpkcs11-proxy.so.0
 COPY --from=builder /usr/local/lib/libpkcs11-proxy.so /usr/local/lib/libpkcs11-proxy.so
-
+ARG http_proxy=http://cluprdproxy.slib.com:3128
+ARG https_proxy=http://cluprdproxy.slib.com:3128
 ### install opencryptoki ###
 RUN apt-get update \
     && apt-get -y install \
-    tzdata \
     libtool \
     libssl-dev \
     libseccomp-dev \
@@ -51,33 +42,25 @@ RUN apt-get update \
     libltdl7 \
     curl \
     && rm -rf /var/lib/apt/lists/*
-
 # Install opencryptoki library
 # There is a bug of opencryptoki v9.8.0 ~ v3.11.0, and there is no /usr/lib/libep11.so, while there is /usr/lib/libep11.so.3
 # There is a hard code to look for /usr/lib/libep11.so
-RUN curl --silent -O http://public.dhe.ibm.com/security/cryptocards/pciecc3/EP11/3.0.0/libep11_3.0.0-5_s390x.deb \
-    && dpkg -i libep11_3.0.0-5_s390x.deb \
+RUN curl --silent -O http://public.dhe.ibm.com/security/cryptocards/pciecc3/EP11/3.0.1/libep11_3.0.1-1_s390x.deb \
+    && dpkg -i libep11_3.0.1-1_s390x.deb \
     && apt-get -y update \
     && apt-get -y install opencryptoki \
     && ln -s /usr/lib/libep11.so.3 /usr/lib/libep11.so
-
 RUN mkdir -p /install \
     && cp -rf /var/lib/opencryptoki /install \
     && mkdir -p /install/config \
     && cp -rf /etc/opencryptoki/* /install/config/
-
 WORKDIR /install
-
 EXPOSE 2345
 ENV PKCS11_DAEMON_SOCKET="tcp://0.0.0.0:2345"
 ENV LIBRARY_LOCATION="/usr/lib/s390x-linux-gnu/pkcs11/PKCS11_API.so"
-
 COPY entrypoint.sh /install/entrypoint.sh
 RUN chmod 777 entrypoint.sh
-
 # create the ibp user and group
-RUN groupadd pkcs11 && usermod -G pkcs11 pkcs11
-
+RUN addgroup --gid 1000 ibp && useradd --uid 1000 --gid 1000 ibp
 RUN chmod -R 777 /install
-
 ENTRYPOINT ["./entrypoint.sh"]
