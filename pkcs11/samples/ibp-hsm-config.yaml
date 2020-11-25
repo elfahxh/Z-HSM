@@ -10,8 +10,8 @@ data:
       mountpath: /hsm/lib/grep11client.yaml
       subpath: grep11client.yaml
     library:
-      filepath: /etc/ep11client/pkcs11-grep11-s390x.so
-      image: docker.io/hexiaohu/pkcs11-ubi:s390x-1.0.0
+      filepath: /etc/ep11client/pkcs11-grep11-s390x.so.2.3.35
+      image: docker.io/hexiaohu/pkcs11-ubi:s390x-1.0.1
       auth:
         imagePullSecret: ""
     type: hsm
